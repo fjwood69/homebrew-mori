@@ -16,8 +16,8 @@ class Mori < Formula
   # ── Release source ─────────────────────────────────────────────────────────
   # Update `url` and `sha256` each time a new mori version is tagged.
   # Compute SHA256: curl -sL <tarball-url> | sha256sum
-  url "https://github.com/fjwood69/mori/archive/refs/tags/v2.2.12.tar.gz"
-  sha256 "replace_with_sha256_of_v2.2.12_tarball"
+  url "https://github.com/fjwood69/mori/archive/refs/tags/v2.2.13.tar.gz"
+  sha256 "c84a88d443dafb6c93d139d3e271a4208f1e2cb7a18c8704ad6e0676f2331fb1"
   license "AGPL-3.0-only"
 
   # HEAD install (for testing from main branch):
