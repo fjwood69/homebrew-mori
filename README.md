@@ -2,6 +2,11 @@
 
 Homebrew tap for [mori](https://github.com/fjwood69/mori) — shared memory layer for AI coding agents.
 
+> ⚠️ **Untested on macOS.** This tap has been validated by code inspection and on Linux only;
+> it has not yet been run through `brew install` on a real Mac. The launchd service integration
+> is unverified. It should work — but you may be the first to find out. Please
+> [report issues](https://github.com/fjwood69/mori/issues). (No Mac at the maintainer's disposal.)
+
 ## Install
 
 ```bash

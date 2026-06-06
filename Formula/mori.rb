@@ -17,8 +17,7 @@ class Mori < Formula
   # Update `url` and `sha256` each time a new mori version is tagged.
   # Compute SHA256: curl -sL <tarball-url> | sha256sum
   url "https://github.com/fjwood69/mori/archive/refs/tags/v2.2.12.tar.gz"
-  sha256 "REPLACE_WITH_SHA256_OF_v2.2.12_TARBALL"
-  version "2.2.12"
+  sha256 "replace_with_sha256_of_v2.2.12_tarball"
   license "AGPL-3.0-only"
 
   # HEAD install (for testing from main branch):
@@ -30,18 +29,19 @@ class Mori < Formula
 
   # ── Install ────────────────────────────────────────────────────────────────
   def install
-    # Create an isolated virtualenv for all Python dependencies.
-    venv = virtualenv_create(libexec, "python3.13")
+    # Create an isolated virtualenv. Homebrew builds it `--without-pip`, so
+    # bootstrap pip into it via ensurepip before installing from requirements.txt
+    # (we install deps from requirements.txt rather than as resource stanzas).
+    virtualenv_create(libexec, "python3.13")
+    system libexec/"bin/python", "-m", "ensurepip"
 
     # 1. Install runtime dependencies from requirements.txt.
-    system libexec/"bin/pip", "install",
-           "--require-virtualenv",
+    system libexec/"bin/python", "-m", "pip", "install",
            "--no-cache-dir",
            "-r", "requirements.txt"
 
     # 2. Install the mori_advisor package itself (no deps — already installed above).
-    system libexec/"bin/pip", "install",
-           "--require-virtualenv",
+    system libexec/"bin/python", "-m", "pip", "install",
            "--no-deps",
            "--no-cache-dir",
            buildpath
@@ -51,17 +51,11 @@ class Mori < Formula
     (etc/"mori").install "deploy/homebrew/mori.env.example" => "env.example"
 
     # 4. Install plugin installer scripts and skills for optional plugin wiring.
-    (share/"mori").mkpath
-    (share/"mori").install "skills"
-    (share/"mori").install "scripts"
+    pkgshare.install "skills"
+    pkgshare.install "scripts"
 
     # 5. Create the data directory.
     (var/"mori").mkpath
-  end
-
-  def post_install
-    # Ensure log directory exists for the service.
-    (var/"log").mkpath
   end
 
   # ── Service (launchd on macOS, systemd --user on Linux) ───────────────────
@@ -70,7 +64,7 @@ class Mori < Formula
   # No environment variables are set here — the config file is the single
   # source of truth and avoids conflicts with the service unit.
   service do
-    run [libexec/"bin/python", "-m", "mori_advisor.main"]
+    run [opt_libexec/"bin/python", "-m", "mori_advisor.main"]
     keep_alive true
     log_path var/"log/mori.log"
     error_log_path var/"log/mori.log"
@@ -79,6 +73,13 @@ class Mori < Formula
   # ── Post-install instructions ─────────────────────────────────────────────
   def caveats
     <<~EOS
+      ⚠️  UNTESTED ON macOS. This formula has been validated by code inspection
+      and on Linux only — it has never been run through `brew install` on a Mac.
+      The launchd service integration in particular is unverified. Please report
+      anything that breaks: https://github.com/fjwood69/mori/issues
+
+      ──────────────────────────────────────────────────
+
       Run the setup wizard to configure Mori and start the server:
 
         mori-setup
@@ -114,7 +115,9 @@ class Mori < Formula
   end
 
   test do
-    # Smoke test: the package must import cleanly.
+    # Smoke test: the package must import cleanly. Point DATA_DIR at the test
+    # sandbox so the import's module-load config doesn't touch a system path.
+    ENV["MORI_ADVISOR_DATA"] = (testpath/"data").to_s
     system libexec/"bin/python", "-c", "import mori_advisor.main"
   end
 end
